@@ -1,0 +1,26 @@
+--- CookieParser.cpp
++++ CookieParser.cpp
+@@ -504,19 +506,22 @@ void CookieParser::ParseAttributes(nsCSt
+         mWarnings.mInvalidSameSiteAttribute = true;
+       }
+     }
+   }
+ 
+   // re-assign aCookieHeader, in case we need to process another cookie
+   aCookieHeader.Assign(Substring(cookieStart, cookieEnd));
+ 
++  bool potentiallyTrustworthy =
++      nsMixedContentBlocker::IsPotentiallyTrustworthyOrigin(mHostURI);
++
+   // If same-site is explicitly set to 'none' but this is not a secure context,
+   // let's abort the parsing.
+-  if (!mCookieData.isSecure() &&
++  if (!mCookieData.isSecure() && !potentiallyTrustworthy &&
+       mCookieData.sameSite() == nsICookie::SAMESITE_NONE) {
+     if (StaticPrefs::network_cookie_sameSite_noneRequiresSecure()) {
+       RejectCookie(RejectedNoneRequiresSecure);
+       return;
+     }
+ 
+     // Still warn about the missing Secure attribute when not enforcing.
+     mWarnings.mSameSiteNoneRequiresSecureForBeta = true;
